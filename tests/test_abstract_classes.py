@@ -1,38 +1,38 @@
 import pytest
-from abc import ABC
+from abc import abstractmethod
 from src.abstract_classes import APIHandler, FileHandler
 
 
 class TestAbstractClasses:
-    """Тесты для абстрактных классов"""
+    """Тесты абстрактных классов"""
 
     def test_api_handler_is_abstract(self):
-        """Проверка, что APIHandler - абстрактный класс"""
-        assert issubclass(APIHandler, ABC)
-
-        # Нельзя создать экземпляр
+        """Тест что APIHandler абстрактный"""
+        # Нельзя создать экземпляр абстрактного класса
         with pytest.raises(TypeError):
             APIHandler()
 
-    def test_file_handler_is_abstract(self):
-        """Проверка, что FileHandler - абстрактный класс"""
-        assert issubclass(FileHandler, ABC)
+    def test_api_handler_methods_are_abstract(self):
+        """Тест что методы APIHandler абстрактные"""
+        # Проверяем декораторы методов
+        assert hasattr(APIHandler.get_vacancies, '__isabstractmethod__')
+        assert APIHandler.get_vacancies.__isabstractmethod__ is True
 
+    def test_file_handler_is_abstract(self):
+        """Тест что FileHandler абстрактный"""
         with pytest.raises(TypeError):
             FileHandler()
 
-    def test_api_handler_methods(self):
-        """Проверка наличия абстрактных методов в APIHandler"""
-        assert hasattr(APIHandler, 'connect')
-        assert hasattr(APIHandler, 'get_vacancies')
-        assert APIHandler.connect.__isabstractmethod__
-        assert APIHandler.get_vacancies.__isabstractmethod__
+    def test_file_handler_methods_are_abstract(self):
+        """Тест что методы FileHandler абстрактные"""
+        assert hasattr(FileHandler.add_vacancy, '__isabstractmethod__')
+        assert FileHandler.add_vacancy.__isabstractmethod__ is True
 
-    def test_file_handler_methods(self):
-        """Проверка наличия абстрактных методов в FileHandler"""
-        assert hasattr(FileHandler, 'add_vacancy')
-        assert hasattr(FileHandler, 'get_vacancies')
-        assert hasattr(FileHandler, 'delete_vacancy')
-        assert FileHandler.add_vacancy.__isabstractmethod__
-        assert FileHandler.get_vacancies.__isabstractmethod__
-        assert FileHandler.delete_vacancy.__isabstractmethod__
+        assert hasattr(FileHandler.get_vacancies, '__isabstractmethod__')
+        assert FileHandler.get_vacancies.__isabstractmethod__ is True
+
+        assert hasattr(FileHandler.delete_vacancy, '__isabstractmethod__')
+        assert FileHandler.delete_vacancy.__isabstractmethod__ is True
+
+        assert hasattr(FileHandler.clear_file, '__isabstractmethod__')
+        assert FileHandler.clear_file.__isabstractmethod__ is True

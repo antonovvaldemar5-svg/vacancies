@@ -1,30 +1,37 @@
 from __future__ import annotations
-from typing import Optional, Dict, Any, List
-from dataclasses import dataclass, field
+
 import re
+from typing import Any, Dict, List, Optional
 
 
-@dataclass
 class Vacancy:
     """Класс для представления вакансии"""
 
-    __slots__ = ('_id', '_name', '_url', '_salary_from', '_salary_to',
-                 '_salary_currency', '_description', '_experience',
-                 '_employer', '_published_at')
+    def __init__(
+            self,
+            _id: str,
+            _name: str,
+            _url: str,
+            _salary_from: Optional[int] = None,
+            _salary_to: Optional[int] = None,
+            _salary_currency: Optional[str] = None,
+            _description: Optional[str] = None,
+            _experience: Optional[str] = None,
+            _employer: Optional[str] = None,
+            _published_at: Optional[str] = None,
+    ):
+        """Инициализация вакансии"""
+        self._id = _id
+        self._name = _name
+        self._url = _url
+        self._salary_from = _salary_from
+        self._salary_to = _salary_to
+        self._salary_currency = _salary_currency
+        self._description = _description
+        self._experience = _experience
+        self._employer = _employer
+        self._published_at = _published_at
 
-    _id: str
-    _name: str
-    _url: str
-    _salary_from: Optional[int] = None
-    _salary_to: Optional[int] = None
-    _salary_currency: Optional[str] = None
-    _description: Optional[str] = None
-    _experience: Optional[str] = None
-    _employer: Optional[str] = None
-    _published_at: Optional[str] = None
-
-    def __post_init__(self):
-        """Валидация данных после инициализации"""
         self._validate_data()
 
     def _validate_data(self):
@@ -79,7 +86,7 @@ class Vacancy:
         if self._salary_currency:
             salary_str += f" {self._salary_currency}"
 
-        return salary_str.replace(",", " ")  # Убираем запятые для читаемости
+        return salary_str.replace(",", " ")
 
     def __str__(self) -> str:
         """Строковое представление вакансии"""
@@ -88,11 +95,15 @@ class Vacancy:
             f"Компания: {self._employer or 'Не указано'}",
             f"Зарплата: {self.formatted_salary}",
             f"Опыт: {self._experience or 'Не указан'}",
-            f"Ссылка: {self._url}"
+            f"Ссылка: {self._url}",
         ]
 
         if self._description:
-            desc = self._description[:100] + "..." if len(self._description) > 100 else self._description
+            desc = (
+                self._description[:100] + "..."
+                if len(self._description) > 100
+                else self._description
+            )
             lines.append(f"Описание: {desc}")
 
         return "\n".join(lines)
@@ -130,7 +141,7 @@ class Vacancy:
             "description": self._description,
             "experience": self._experience,
             "employer": self._employer,
-            "published_at": self._published_at
+            "published_at": self._published_at,
         }
 
     @classmethod
@@ -138,26 +149,29 @@ class Vacancy:
         """Создание вакансии из словаря"""
         # Обработка зарплаты из формата HH.ru
         salary = data.get("salary")
-        salary_from = None
-        salary_to = None
-        salary_currency = None
+        salary_from = data.get("salary_from")
+        salary_to = data.get("salary_to")
+        salary_currency = data.get("salary_currency")
 
-        if salary:
+        if salary and not salary_from:
             salary_from = salary.get("from")
             salary_to = salary.get("to")
             salary_currency = salary.get("currency")
 
+        # Получаем URL из разных полей
+        url = data.get("url") or data.get("alternate_url") or ""
+
         return cls(
             _id=data.get("id", ""),
             _name=data.get("name", ""),
-            _url=data.get("url", ""),
+            _url=url,
             _salary_from=salary_from,
             _salary_to=salary_to,
             _salary_currency=salary_currency,
             _description=data.get("description"),
             _experience=data.get("experience"),
             _employer=data.get("employer"),
-            _published_at=data.get("published_at")
+            _published_at=data.get("published_at"),
         )
 
     @classmethod

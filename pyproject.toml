@@ -21,3 +21,24 @@ lint = [
     "isort (>=7.0.0,<8.0.0)",
     "flake8 (>=7.3.0,<8.0.0)"
 ]
+[tool.flake8]
+max-line-length = 120
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".venv",
+    "venv",
+    "env"
+]
+ignore = [
+    "E203",  # Пробел перед :
+    "W503",  # Разрыв строки перед бинарным оператором
+    "C901",  # Слишком сложная функция
+    "E501",  # Слишком длинная строка
+]
+per-file-ignores = [
+    "tests/*: S101",
+    "src/main.py: C901"
+]

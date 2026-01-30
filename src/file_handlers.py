@@ -1,7 +1,8 @@
-import json
 import csv
+import json
 import os
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 from .abstract_classes import FileHandler
 
 
@@ -15,20 +16,20 @@ class JSONSaver(FileHandler):
     def _ensure_file_exists(self):
         """Создание файла, если он не существует"""
         if not os.path.exists(self._filename):
-            with open(self._filename, 'w', encoding='utf-8') as f:
+            with open(self._filename, "w", encoding="utf-8") as f:
                 json.dump([], f)
 
     def _read_file(self) -> List[Dict[str, Any]]:
         """Чтение данных из файла"""
         try:
-            with open(self._filename, 'r', encoding='utf-8') as f:
+            with open(self._filename, "r", encoding="utf-8") as f:
                 return json.load(f)
         except (json.JSONDecodeError, FileNotFoundError):
             return []
 
     def _write_file(self, data: List[Dict[str, Any]]) -> None:
         """Запись данных в файл"""
-        with open(self._filename, 'w', encoding='utf-8') as f:
+        with open(self._filename, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
     def add_vacancy(self, vacancy_data: Dict[str, Any]) -> None:
@@ -42,7 +43,9 @@ class JSONSaver(FileHandler):
         vacancies.append(vacancy_data)
         self._write_file(vacancies)
 
-    def get_vacancies(self, criteria: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def get_vacancies(
+        self, criteria: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
         """Получение вакансий по критериям"""
         vacancies = self._read_file()
 
@@ -76,6 +79,10 @@ class JSONSaver(FileHandler):
         vacancies = [v for v in vacancies if v.get("id") != vacancy_id]
         self._write_file(vacancies)
 
+    def clear_file(self) -> None:
+        """Очистка файла (удаление всех вакансий)"""
+        self._write_file([])
+
 
 class CSVSaver(FileHandler):
     """Класс для работы с CSV-файлами"""
@@ -87,13 +94,19 @@ class CSVSaver(FileHandler):
         """Заглушка - метод не реализован"""
         raise NotImplementedError("CSVSaver.add_vacancy еще не реализован")
 
-    def get_vacancies(self, criteria: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def get_vacancies(
+        self, criteria: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
         """Заглушка - метод не реализован"""
         raise NotImplementedError("CSVSaver.get_vacancies еще не реализован")
 
     def delete_vacancy(self, vacancy_id: str) -> None:
         """Заглушка - метод не реализован"""
         raise NotImplementedError("CSVSaver.delete_vacancy еще не реализован")
+
+    def clear_file(self) -> None:
+        """Заглушка - метод не реализован"""
+        raise NotImplementedError("CSVSaver.clear_file еще не реализован")
 
 
 class TXTSaver(FileHandler):
@@ -106,10 +119,16 @@ class TXTSaver(FileHandler):
         """Заглушка - метод не реализован"""
         raise NotImplementedError("TXTSaver.add_vacancy еще не реализован")
 
-    def get_vacancies(self, criteria: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def get_vacancies(
+        self, criteria: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
         """Заглушка - метод не реализован"""
         raise NotImplementedError("TXTSaver.get_vacancies еще не реализован")
 
     def delete_vacancy(self, vacancy_id: str) -> None:
         """Заглушка - метод не реализован"""
         raise NotImplementedError("TXTSaver.delete_vacancy еще не реализован")
+
+    def clear_file(self) -> None:
+        """Заглушка - метод не реализован"""
+        raise NotImplementedError("TXTSaver.clear_file еще не реализован")
