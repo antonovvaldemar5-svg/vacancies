@@ -1,6 +1,6 @@
-import requests
+﻿import requests
+import re
 from typing import List, Dict, Any
-from abc import ABC
 from .abstract_classes import APIHandler
 
 
@@ -12,14 +12,6 @@ class HeadHunterAPI(APIHandler):
         self._headers = {
             "User-Agent": "HH-User-Agent"
         }
-
-    def __connect(self) -> None:
-        """Приватный метод для проверки соединения с API"""
-        try:
-            response = requests.get(self._base_url, headers=self._headers, params={"text": "test"})
-            response.raise_for_status()
-        except requests.RequestException as e:
-            raise ConnectionError(f"Ошибка подключения к API HH.ru: {e}")
 
     def get_vacancies(self, search_query: str, per_page: int = 100, **kwargs) -> List[Dict[str, Any]]:
         """
@@ -33,8 +25,6 @@ class HeadHunterAPI(APIHandler):
         Returns:
             Список вакансий в формате словарей
         """
-        self.__connect()
-
         params = {
             "text": search_query,
             "per_page": per_page,
@@ -50,15 +40,28 @@ class HeadHunterAPI(APIHandler):
 
             vacancies = []
             for item in data.get("items", []):
+                # Получаем зарплату
+                salary_data = item.get("salary")
+                salary_from = None
+                salary_to = None
+                salary_currency = None
+
+                if salary_data:
+                    salary_from = salary_data.get("from")
+                    salary_to = salary_data.get("to")
+                    salary_currency = salary_data.get("currency")
+
                 vacancy = {
-                    "id": item.get("id"),
-                    "name": item.get("name"),
-                    "url": item.get("alternate_url"),
-                    "salary": item.get("salary"),
+                    "id": item.get("id", ""),
+                    "name": item.get("name", ""),
+                    "url": item.get("alternate_url", ""),
+                    "salary_from": salary_from,
+                    "salary_to": salary_to,
+                    "salary_currency": salary_currency,
                     "description": self._clean_description(item.get("snippet", {}).get("requirement", "")),
-                    "experience": item.get("experience", {}).get("name"),
-                    "employer": item.get("employer", {}).get("name"),
-                    "published_at": item.get("published_at")
+                    "experience": item.get("experience", {}).get("name", ""),
+                    "employer": item.get("employer", {}).get("name", ""),
+                    "published_at": item.get("published_at", "")
                 }
                 vacancies.append(vacancy)
 
@@ -67,11 +70,13 @@ class HeadHunterAPI(APIHandler):
         except requests.RequestException as e:
             print(f"Ошибка при получении вакансий: {e}")
             return []
+        except Exception as e:
+            print(f"Неожиданная ошибка: {e}")
+            return []
 
     @staticmethod
     def _clean_description(description: str) -> str:
         """Очистка описания от HTML-тегов"""
         if not description:
             return ""
-        import re
         return re.sub(r'<[^>]+>', '', description)
