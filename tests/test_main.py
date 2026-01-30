@@ -1,12 +1,6 @@
-﻿import pytest
-from unittest.mock import Mock, patch, MagicMock
-import builtins
+﻿from unittest.mock import Mock, patch
 from io import StringIO
-import sys
-import json
-import os
 from src.api import HeadHunterAPI
-from src.vacancy import Vacancy
 from src.file_handlers import JSONSaver
 
 

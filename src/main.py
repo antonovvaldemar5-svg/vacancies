@@ -4,7 +4,6 @@
 """
 import os
 import sys
-from typing import List
 
 # Добавляем родительскую директорию в путь для корректных импортов
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

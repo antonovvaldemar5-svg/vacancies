@@ -1,7 +1,7 @@
 """
 Модуль с утилитными функциями для работы с вакансиями.
 """
-from typing import List, Optional
+from typing import List
 
 from .vacancy import Vacancy
 
