@@ -1,4 +1,4 @@
-﻿import requests
+import requests
 import re
 from typing import List, Dict, Any
 from .abstract_classes import APIHandler
@@ -9,9 +9,7 @@ class HeadHunterAPI(APIHandler):
 
     def __init__(self):
         self._base_url = "https://api.hh.ru/vacancies"
-        self._headers = {
-            "User-Agent": "HH-User-Agent"
-        }
+        self._headers = {"User-Agent": "HH-User-Agent"}
 
     def get_vacancies(self, search_query: str, per_page: int = 100, **kwargs) -> List[Dict[str, Any]]:
         """
@@ -30,7 +28,7 @@ class HeadHunterAPI(APIHandler):
             "per_page": per_page,
             "area": 113,  # Россия
             "page": kwargs.get("page", 0),
-            "only_with_salary": kwargs.get("only_with_salary", False)
+            "only_with_salary": kwargs.get("only_with_salary", False),
         }
 
         try:
@@ -61,7 +59,7 @@ class HeadHunterAPI(APIHandler):
                     "description": self._clean_description(item.get("snippet", {}).get("requirement", "")),
                     "experience": item.get("experience", {}).get("name", ""),
                     "employer": item.get("employer", {}).get("name", ""),
-                    "published_at": item.get("published_at", "")
+                    "published_at": item.get("published_at", ""),
                 }
                 vacancies.append(vacancy)
 
@@ -79,4 +77,4 @@ class HeadHunterAPI(APIHandler):
         """Очистка описания от HTML-тегов"""
         if not description:
             return ""
-        return re.sub(r'<[^>]+>', '', description)
+        return re.sub(r"<[^>]+>", "", description)

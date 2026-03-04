@@ -1,312 +1,129 @@
-"""
-Модуль для взаимодействия с пользователем через консоль.
-Основной интерфейс программы.
-"""
-import os
-import sys
-
-# Добавляем родительскую директорию в путь для корректных импортов
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-try:
-    from src.api import HeadHunterAPI
-    from src.file_handlers import JSONSaver
-    from src.utils import (
-        filter_vacancies,
-        get_top_vacancies,
-        get_vacancies_by_salary,
-        print_vacancies,
-        sort_vacancies,
-    )
-    from src.vacancy import Vacancy
-except ImportError as e:
-    print(f"Ошибка импорта модулей: {e}")
-    print("Проверьте структуру проекта и наличие всех файлов.")
-    sys.exit(1)
+from src.db_creator import DBCreator
+from src.db_manager import DBManager
+from src.data_loader import load_companies_vacancies
 
 
-def user_interaction() -> None:
-    """
-    Функция для взаимодействия с пользователем через консоль.
-    Предоставляет меню с различными опциями работы с вакансиями.
-    """
-    print("=" * 60)
-    print("ПОИСК ВАКАНСИЙ НА HH.RU")
-    print("=" * 60)
-
-    # Инициализация API и хранилища
-    hh_api = HeadHunterAPI()
-    json_saver = JSONSaver()
-
-    while True:
-        try:
-            print("\nМЕНЮ:")
-            print("1. Поиск и сохранение вакансий")
-            print("2. Показать топ N вакансий по зарплате")
-            print("3. Поиск вакансий по ключевому слову")
-            print("4. Поиск по диапазону зарплат")
-            print("5. Показать все сохраненные вакансии")
-            print("6. Удалить вакансию")
-            print("7. Очистить все сохраненные вакансии")
-            print("8. Выход")
-
-            choice = input("\nВыберите действие (1-8): ").strip()
-
-            if choice == "1":
-                _handle_search_vacancies(hh_api, json_saver)
-            elif choice == "2":
-                _handle_top_vacancies(json_saver)
-            elif choice == "3":
-                _handle_keyword_search(json_saver)
-            elif choice == "4":
-                _handle_salary_search(json_saver)
-            elif choice == "5":
-                _handle_show_all(json_saver)
-            elif choice == "6":
-                _handle_delete_vacancy(json_saver)
-            elif choice == "7":
-                _handle_clear_all(json_saver)
-            elif choice == "8":
-                print("Выход из программы...")
-                break
-            else:
-                print("Некорректный выбор. Попробуйте снова.")
-
-        except KeyboardInterrupt:
-            print("\n\nПрограмма прервана пользователем.")
-            break
-        except Exception as e:
-            print(f"Произошла ошибка: {e}")
-            print("Попробуйте еще раз.")
-
-
-def _handle_search_vacancies(api: HeadHunterAPI, saver: JSONSaver) -> None:
-    """Обработка поиска и сохранения вакансий"""
-    search_query = input(
-        "Введите поисковый запрос (например: Python разработчик): "
-    ).strip()
-
-    if not search_query:
-        print("Поисковый запрос не может быть пустым")
-        return
-
-    try:
-        per_page_input = input(
-            "Введите количество вакансий для загрузки (по умолчанию 100): "
-        ).strip()
-        per_page = int(per_page_input) if per_page_input.isdigit() else 100
-    except ValueError:
-        print("Некорректное число, используется значение по умолчанию (100)")
-        per_page = 100
-
-    print("\nЗагружаем вакансии...")
-    try:
-        vacancies_data = api.get_vacancies(search_query, per_page=per_page)
-    except Exception as e:
-        print(f"Ошибка при загрузке вакансий: {e}")
-        return
-
-    if not vacancies_data:
+def print_vacancies(vacancies):
+    """Вывод вакансий в читаемом виде"""
+    if not vacancies:
         print("Вакансии не найдены")
         return
 
-    # Преобразование в объекты
-    try:
-        vacancies_list = Vacancy.cast_to_object_list(vacancies_data)
-    except Exception as e:
-        print(f"Ошибка при обработке данных вакансий: {e}")
-        return
+    for i, v in enumerate(vacancies, 1):
+        print(f"\n--- Вакансия {i} ---")
+        print(f"Компания: {v['company_name']}")
+        print(f"Вакансия: {v['vacancy_name']}")
 
-    # Сохранение в файл
-    saved_count = 0
-    for vacancy in vacancies_list:
-        try:
-            saver.add_vacancy(vacancy.to_dict())
-            saved_count += 1
-        except Exception as e:
-            print(f"Ошибка при сохранении вакансии {vacancy._name}: {e}")
+        salary_from = v.get("salary_from")
+        salary_to = v.get("salary_to")
+        currency = v.get("salary_currency", "руб")
 
-    print(f"\nЗагружено {len(vacancies_list)} вакансий, сохранено {saved_count}")
-
-    # Показать первые 5
-    if vacancies_list:
-        show = input("Показать первые 5 вакансий? (y/n): ").lower()
-        if show == 'y':
-            print_vacancies(vacancies_list[:5])
-
-
-def _handle_top_vacancies(saver: JSONSaver) -> None:
-    """Обработка получения топ N вакансий"""
-    try:
-        top_n_input = input("Введите количество вакансий для вывода в топ N: ").strip()
-        if not top_n_input:
-            print("Значение не может быть пустым")
-            return
-
-        top_n = int(top_n_input)
-        if top_n <= 0:
-            print("Число должно быть положительным")
-            return
-    except ValueError:
-        print("Некорректное число")
-        return
-
-    # Получение из файла
-    try:
-        saved_data = saver.get_vacancies()
-    except Exception as e:
-        print(f"Ошибка при чтении файла: {e}")
-        return
-
-    if not saved_data:
-        print("Нет сохраненных вакансий")
-        return
-
-    try:
-        vacancies_list = Vacancy.cast_to_object_list(saved_data)
-        sorted_vacancies = sort_vacancies(vacancies_list)
-        top_vacancies = get_top_vacancies(sorted_vacancies, top_n)
-
-        print(f"\nТоп {top_n} вакансий по зарплате:")
-        print_vacancies(top_vacancies)
-    except Exception as e:
-        print(f"Ошибка при обработке вакансий: {e}")
-
-
-def _handle_keyword_search(saver: JSONSaver) -> None:
-    """Обработка поиска по ключевому слову"""
-    keyword = input("Введите ключевое слово для поиска в описании: ").strip()
-
-    if not keyword:
-        print("Ключевое слово не может быть пустым")
-        return
-
-    # Получение из файла
-    try:
-        saved_data = saver.get_vacancies()
-    except Exception as e:
-        print(f"Ошибка при чтении файла: {e}")
-        return
-
-    if not saved_data:
-        print("Нет сохраненных вакансий")
-        return
-
-    try:
-        vacancies_list = Vacancy.cast_to_object_list(saved_data)
-        filtered = filter_vacancies(vacancies_list, [keyword])
-
-        if not filtered:
-            print(f"Вакансии с ключевым словом '{keyword}' не найдены")
+        if salary_from and salary_to:
+            print(f"Зарплата: {
+                  salary_from:,} - {salary_to:,} {currency}".replace(",", " "))
+        elif salary_from:
+            print(f"Зарплата: от {salary_from:,} {currency}".replace(",", " "))
+        elif salary_to:
+            print(f"Зарплата: до {salary_to:,} {currency}".replace(",", " "))
         else:
-            print(f"\nНайдено {len(filtered)} вакансий с ключевым словом '{keyword}':")
-            print_vacancies(filtered)
-    except Exception as e:
-        print(f"Ошибка при фильтрации вакансий: {e}")
+            print("Зарплата: не указана")
+
+        print(f"Ссылка: {v['url']}")
+
+    print(f"\nВсего: {len(vacancies)} вакансий")
 
 
-def _handle_salary_search(saver: JSONSaver) -> None:
-    """Обработка поиска по диапазону зарплат"""
-    salary_range = input(
-        "Введите диапазон зарплат (например: 100000-200000): "
-    ).strip()
+def print_companies_stats(stats):
+    """Вывод статистики по компаниям"""
+    print("\n" + "=" * 60)
+    print("КОМПАНИИ И КОЛИЧЕСТВО ВАКАНСИЙ")
+    print("=" * 60)
 
-    if not salary_range:
-        print("Диапазон зарплат не может быть пустым")
-        return
+    for s in stats:
+        print(f"{s['company_name']}: {s['vacancies_count']} вакансий")
 
-    # Получение из файла
-    try:
-        saved_data = saver.get_vacancies()
-    except Exception as e:
-        print(f"Ошибка при чтении файла: {e}")
-        return
+    total = sum(s["vacancies_count"] for s in stats)
+    print(f"\nВсего компаний: {len(stats)}, всего вакансий: {total}")
 
-    if not saved_data:
-        print("Нет сохраненных вакансий")
-        return
 
-    try:
-        vacancies_list = Vacancy.cast_to_object_list(saved_data)
-        filtered = get_vacancies_by_salary(vacancies_list, salary_range)
+def user_interaction():
+    """Интерфейс пользователя"""
+    print("=" * 60)
+    print("ПОИСК ВАКАНСИЙ НА HH.RU (БД версия)")
+    print("=" * 60)
 
-        if not filtered:
-            print(f"Вакансии с зарплатой в диапазоне {salary_range} не найдены")
+    db = None
+
+    while True:
+        print("\nМЕНЮ:")
+        print("1. Создать таблицы в БД")
+        print("2. Загрузить данные из hh.ru")
+        print("3. Список компаний и количество вакансий")
+        print("4. Все вакансии")
+        print("5. Средняя зарплата")
+        print("6. Вакансии с зарплатой выше средней")
+        print("7. Поиск вакансий по ключевому слову")
+        print("8. Выход")
+
+        choice = input("\nВыберите действие (1-8): ").strip()
+
+        if choice == "1":
+            DBCreator.create_tables()
+            db = DBManager()
+
+        elif choice == "2":
+            load_companies_vacancies()
+            if not db:
+                db = DBManager()
+
+        elif choice == "3":
+            if not db:
+                print("Сначала загрузите данные (пункт 2)")
+                continue
+            stats = db.get_companies_and_vacancies_count()
+            print_companies_stats(stats)
+
+        elif choice == "4":
+            if not db:
+                print("Сначала загрузите данные (пункт 2)")
+                continue
+            vacancies = db.get_all_vacancies()
+            print_vacancies(vacancies)
+
+        elif choice == "5":
+            if not db:
+                print("Сначала загрузите данные (пункт 2)")
+                continue
+            avg = db.get_avg_salary()
+            print(f"\nСредняя зарплата: {avg:,.0f} руб.".replace(",", " "))
+
+        elif choice == "6":
+            if not db:
+                print("Сначала загрузите данные (пункт 2)")
+                continue
+            vacancies = db.get_vacancies_with_higher_salary()
+            print(f"\nНайдено {
+                len(vacancies)} вакансий с зарплатой выше средней")
+            print_vacancies(vacancies)
+
+        elif choice == "7":
+            if not db:
+                print("Сначала загрузите данные (пункт 2)")
+                continue
+            keyword = input("🔍 Введите ключевое слово: ").strip()
+            vacancies = db.get_vacancies_with_keyword(keyword)
+            print(f"\nНайдено {len(vacancies)} вакансий со словом '{keyword}'")
+            print_vacancies(vacancies)
+
+        elif choice == "8":
+            if db:
+                db.close()
+            print("До свидания!")
+            break
+
         else:
-            print(f"\nНайдено {len(filtered)} вакансий с зарплатой в диапазоне {salary_range}:")
-            print_vacancies(filtered)
-    except Exception as e:
-        print(f"Ошибка при фильтрации по зарплате: {e}")
-
-
-def _handle_show_all(saver: JSONSaver) -> None:
-    """Обработка показа всех сохраненных вакансий"""
-    try:
-        saved_data = saver.get_vacancies()
-    except Exception as e:
-        print(f"Ошибка при чтении файла: {e}")
-        return
-
-    if not saved_data:
-        print("Нет сохраненных вакансий")
-        return
-
-    try:
-        vacancies_list = Vacancy.cast_to_object_list(saved_data)
-        print(f"\nВсе сохраненные вакансии ({len(vacancies_list)} шт.):")
-
-        show_all = input("Показать все сразу? (y/n): ").lower()
-        if show_all == 'y':
-            print_vacancies(vacancies_list)
-        else:
-            # Показать с пагинацией
-            page_size = 5
-            for i in range(0, len(vacancies_list), page_size):
-                page = vacancies_list[i: i + page_size]
-                print_vacancies(page)
-
-                if i + page_size < len(vacancies_list):
-                    input("\nНажмите Enter для продолжения...")
-    except Exception as e:
-        print(f"Ошибка при отображении вакансий: {e}")
-
-
-def _handle_delete_vacancy(saver: JSONSaver) -> None:
-    """Обработка удаления вакансии"""
-    vacancy_id = input("Введите ID вакансии для удаления: ").strip()
-
-    if not vacancy_id:
-        print("ID вакансии не может быть пустым")
-        return
-
-    try:
-        saver.delete_vacancy(vacancy_id)
-        print(f"Вакансия с ID {vacancy_id} удалена")
-    except Exception as e:
-        print(f"Ошибка при удалении вакансии: {e}")
-
-
-def _handle_clear_all(saver: JSONSaver) -> None:
-    """Обработка очистки всех вакансий"""
-    confirm = input(
-        "Вы уверены, что хотите удалить все вакансии? (y/n): "
-    ).lower()
-
-    if confirm == 'y':
-        try:
-            saver.clear_file()
-            print("Все вакансии удалены")
-        except Exception as e:
-            print(f"Ошибка при очистке файла: {e}")
-    else:
-        print("Отменено")
+            print("Неверный выбор. Попробуйте снова.")
 
 
 if __name__ == "__main__":
-    try:
-        user_interaction()
-    except KeyboardInterrupt:
-        print("\n\nПрограмма завершена.")
-    except Exception as e:
-        print(f"Критическая ошибка: {e}")
-        print("Программа завершена.")
+    user_interaction()

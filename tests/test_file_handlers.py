@@ -1,4 +1,4 @@
-﻿import os
+import os
 import json
 import tempfile
 import pytest
@@ -39,7 +39,7 @@ class TestJSONSaver:
         assert os.path.exists(self.test_file)
 
         # Проверяем что файл содержит пустой список
-        with open(self.test_file, 'r', encoding='utf-8') as f:
+        with open(self.test_file, "r", encoding="utf-8") as f:
             content = json.load(f)
             assert content == []
 
@@ -50,13 +50,13 @@ class TestJSONSaver:
             "name": "Python Developer",
             "url": "https://hh.ru/vacancy/123",
             "salary_from": 100000,
-            "salary_to": 150000
+            "salary_to": 150000,
         }
 
         self.saver.add_vacancy(vacancy_data)
 
         # Читаем файл и проверяем
-        with open(self.test_file, 'r', encoding='utf-8') as f:
+        with open(self.test_file, "r", encoding="utf-8") as f:
             data = json.load(f)
             assert len(data) == 1
             assert data[0]["id"] == "123"
@@ -64,16 +64,13 @@ class TestJSONSaver:
 
     def test_add_vacancy_no_duplicates(self):
         """Тест что дубликаты не добавляются"""
-        vacancy_data = {
-            "id": "123",
-            "name": "Python Developer"
-        }
+        vacancy_data = {"id": "123", "name": "Python Developer"}
 
         # Добавляем два раза
         self.saver.add_vacancy(vacancy_data)
         self.saver.add_vacancy(vacancy_data)
 
-        with open(self.test_file, 'r', encoding='utf-8') as f:
+        with open(self.test_file, "r", encoding="utf-8") as f:
             data = json.load(f)
             assert len(data) == 1  # Только одна запись
 
@@ -88,7 +85,7 @@ class TestJSONSaver:
         vacancies_data = [
             {"id": "1", "name": "Python", "salary": 100000},
             {"id": "2", "name": "Java", "salary": 120000},
-            {"id": "3", "name": "Python Senior", "salary": 200000}
+            {"id": "3", "name": "Python Senior", "salary": 200000},
         ]
 
         for data in vacancies_data:
@@ -103,7 +100,7 @@ class TestJSONSaver:
         vacancies_data = [
             {"id": "1", "name": "Python Developer", "experience": "junior"},
             {"id": "2", "name": "Java Developer", "experience": "senior"},
-            {"id": "3", "name": "Python Senior", "experience": "senior"}
+            {"id": "3", "name": "Python Senior", "experience": "senior"},
         ]
 
         for data in vacancies_data:
@@ -118,10 +115,7 @@ class TestJSONSaver:
         assert len(senior_vacancies) == 2
 
         # Фильтр по нескольким критериям
-        python_senior = self.saver.get_vacancies({
-            "name": "Python",
-            "experience": "senior"
-        })
+        python_senior = self.saver.get_vacancies({"name": "Python", "experience": "senior"})
         assert len(python_senior) == 1
         assert python_senior[0]["id"] == "3"
 
@@ -141,11 +135,7 @@ class TestJSONSaver:
     def test_delete_vacancy(self):
         """Тест удаления вакансии"""
         # Добавляем несколько вакансий
-        vacancies_data = [
-            {"id": "1", "name": "Python"},
-            {"id": "2", "name": "Java"},
-            {"id": "3", "name": "JavaScript"}
-        ]
+        vacancies_data = [{"id": "1", "name": "Python"}, {"id": "2", "name": "Java"}, {"id": "3", "name": "JavaScript"}]
 
         for data in vacancies_data:
             self.saver.add_vacancy(data)
@@ -174,7 +164,7 @@ class TestJSONSaver:
     def test_read_file_corrupted_json(self):
         """Тест чтения поврежденного JSON файла"""
         # Записываем некорректный JSON
-        with open(self.test_file, 'w', encoding='utf-8') as f:
+        with open(self.test_file, "w", encoding="utf-8") as f:
             f.write("{invalid json")
 
         # Должен вернуть пустой список

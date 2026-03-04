@@ -1,4 +1,4 @@
-﻿import pytest
+import pytest
 from src.vacancy import Vacancy
 
 
@@ -17,7 +17,7 @@ class TestVacancy:
             "_description": "Разработка на Python, Django",
             "_experience": "От 1 года до 3 лет",
             "_employer": "Test Company",
-            "_published_at": "2024-01-01T10:00:00+0300"
+            "_published_at": "2024-01-01T10:00:00+0300",
         }
 
     def test_init_valid_data(self):
@@ -34,11 +34,7 @@ class TestVacancy:
     def test_init_without_salary(self):
         """Тест инициализации без зарплаты"""
         data = self.vacancy_data.copy()
-        data.update({
-            "_salary_from": None,
-            "_salary_to": None,
-            "_salary_currency": None
-        })
+        data.update({"_salary_from": None, "_salary_to": None, "_salary_currency": None})
 
         vacancy = Vacancy(**data)
 
@@ -108,19 +104,11 @@ class TestVacancy:
         assert "RUR" in vacancy1.formatted_salary
 
         # Только от
-        vacancy2 = Vacancy(
-            _id="2", _name="Test", _url="url",
-            _salary_from=100000,
-            _salary_currency="RUR"
-        )
+        vacancy2 = Vacancy(_id="2", _name="Test", _url="url", _salary_from=100000, _salary_currency="RUR")
         assert vacancy2.formatted_salary == "от 100 000 RUR"
 
         # Только до
-        vacancy3 = Vacancy(
-            _id="3", _name="Test", _url="url",
-            _salary_to=150000,
-            _salary_currency="USD"
-        )
+        vacancy3 = Vacancy(_id="3", _name="Test", _url="url", _salary_to=150000, _salary_currency="USD")
         assert vacancy3.formatted_salary == "до 150 000 USD"
 
         # Без зарплаты
@@ -148,7 +136,8 @@ class TestVacancy:
         result = str(vacancy)
 
         assert "..." in result
-        assert len(result.split("Описание: ")[1]) <= 103  # 100 символов + "..."
+        # 100 символов + "..."
+        assert len(result.split("Описание: ")[1]) <= 103
 
     def test_comparison_methods(self):
         """Тест методов сравнения"""
@@ -189,15 +178,11 @@ class TestVacancy:
             "id": "123",
             "name": "Python Developer",
             "alternate_url": "https://hh.ru/vacancy/123",
-            "salary": {
-                "from": 100000,
-                "to": 150000,
-                "currency": "RUR"
-            },
+            "salary": {"from": 100000, "to": 150000, "currency": "RUR"},
             "snippet": {"requirement": "Опыт работы"},
             "experience": {"name": "От 1 года до 3 лет"},
             "employer": {"name": "Test Company"},
-            "published_at": "2024-01-01T10:00:00+0300"
+            "published_at": "2024-01-01T10:00:00+0300",
         }
 
         vacancy = Vacancy.from_dict(hh_data)
@@ -221,7 +206,7 @@ class TestVacancy:
             "description": "Test",
             "experience": "1-3 years",
             "employer": "Test Company",
-            "published_at": "2024-01-01"
+            "published_at": "2024-01-01",
         }
 
         vacancy = Vacancy.from_dict(data)
@@ -234,14 +219,14 @@ class TestVacancy:
                 "id": "1",
                 "name": "Python Developer",
                 "url": "url1",
-                "salary": {"from": 100000, "to": 150000, "currency": "RUR"}
+                "salary": {"from": 100000, "to": 150000, "currency": "RUR"},
             },
             {
                 "id": "2",
                 "name": "Java Developer",
                 "url": "url2",
-                "salary": {"from": 120000, "to": 180000, "currency": "RUR"}
-            }
+                "salary": {"from": 120000, "to": 180000, "currency": "RUR"},
+            },
         ]
 
         vacancies = Vacancy.cast_to_object_list(data_list)

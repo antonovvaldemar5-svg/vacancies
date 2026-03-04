@@ -7,17 +7,17 @@ class Vacancy:
     """Класс для представления вакансии"""
 
     def __init__(
-            self,
-            _id: str,
-            _name: str,
-            _url: str,
-            _salary_from: Optional[int] = None,
-            _salary_to: Optional[int] = None,
-            _salary_currency: Optional[str] = None,
-            _description: Optional[str] = None,
-            _experience: Optional[str] = None,
-            _employer: Optional[str] = None,
-            _published_at: Optional[str] = None,
+        self,
+        _id: str,
+        _name: str,
+        _url: str,
+        _salary_from: Optional[int] = None,
+        _salary_to: Optional[int] = None,
+        _salary_currency: Optional[str] = None,
+        _description: Optional[str] = None,
+        _experience: Optional[str] = None,
+        _employer: Optional[str] = None,
+        _published_at: Optional[str] = None,
     ):
         """Инициализация вакансии"""
         self._id = _id
@@ -98,11 +98,7 @@ class Vacancy:
         ]
 
         if self._description:
-            desc = (
-                self._description[:100] + "..."
-                if len(self._description) > 100
-                else self._description
-            )
+            desc = self._description[:100] + "..." if len(self._description) > 100 else self._description
             lines.append(f"Описание: {desc}")
 
         return "\n".join(lines)

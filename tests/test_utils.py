@@ -1,14 +1,8 @@
-﻿"""
+"""
 Тесты для утилитных функций работы с вакансиями.
 """
-import pytest
-from src.utils import (
-    filter_vacancies,
-    get_vacancies_by_salary,
-    sort_vacancies,
-    get_top_vacancies,
-    print_vacancies
-)
+
+from src.utils import filter_vacancies, get_vacancies_by_salary, sort_vacancies, get_top_vacancies, print_vacancies
 from src.vacancy import Vacancy
 
 
@@ -26,7 +20,7 @@ class TestUtils:
                 _salary_to=150000,
                 _description="Разработка на Python и Django",
                 _experience="От 1 года до 3 лет",
-                _employer="Company A"
+                _employer="Company A",
             ),
             Vacancy(
                 _id="2",
@@ -36,7 +30,7 @@ class TestUtils:
                 _salary_to=180000,
                 _description="Разработка на Java Spring",
                 _experience="От 3 до 6 лет",
-                _employer="Company B"
+                _employer="Company B",
             ),
             Vacancy(
                 _id="3",
@@ -46,7 +40,7 @@ class TestUtils:
                 _salary_to=300000,
                 _description="Python разработка архитектуры",
                 _experience="Более 6 лет",
-                _employer="Company C"
+                _employer="Company C",
             ),
             Vacancy(
                 _id="4",
@@ -56,8 +50,8 @@ class TestUtils:
                 _salary_to=120000,
                 _description="Frontend разработка на React",
                 _experience="Нет опыта",
-                _employer="Company D"
-            )
+                _employer="Company D",
+            ),
         ]
 
     def test_filter_vacancies_with_keywords(self):
@@ -261,8 +255,10 @@ class TestUtilsAdvanced:
     def test_get_vacancies_by_salary_only_from_or_to(self):
         """Тест фильтрации при вакансиях с только одной границей зарплаты"""
         vacancies = [
-            Vacancy(_id="1", _name="Only From", _url="url", _salary_from=100000),  # Только от
-            Vacancy(_id="2", _name="Only To", _url="url", _salary_to=150000),  # Только до
+            Vacancy(_id="1", _name="Only From", _url="url", _salary_from=100000),
+            # Только от
+            Vacancy(_id="2", _name="Only To", _url="url", _salary_to=150000),
+            # Только до
             Vacancy(_id="3", _name="Both", _url="url", _salary_from=120000, _salary_to=180000),
         ]
 

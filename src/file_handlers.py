@@ -42,9 +42,7 @@ class JSONSaver(FileHandler):
         vacancies.append(vacancy_data)
         self._write_file(vacancies)
 
-    def get_vacancies(
-        self, criteria: Optional[Dict[str, Any]] = None
-    ) -> List[Dict[str, Any]]:
+    def get_vacancies(self, criteria: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """Получение вакансий по критериям"""
         vacancies = self._read_file()
 
@@ -93,9 +91,7 @@ class CSVSaver(FileHandler):
         """Заглушка - метод не реализован"""
         raise NotImplementedError("CSVSaver.add_vacancy еще не реализован")
 
-    def get_vacancies(
-        self, criteria: Optional[Dict[str, Any]] = None
-    ) -> List[Dict[str, Any]]:
+    def get_vacancies(self, criteria: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """Заглушка - метод не реализован"""
         raise NotImplementedError("CSVSaver.get_vacancies еще не реализован")
 
@@ -118,9 +114,7 @@ class TXTSaver(FileHandler):
         """Заглушка - метод не реализован"""
         raise NotImplementedError("TXTSaver.add_vacancy еще не реализован")
 
-    def get_vacancies(
-        self, criteria: Optional[Dict[str, Any]] = None
-    ) -> List[Dict[str, Any]]:
+    def get_vacancies(self, criteria: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """Заглушка - метод не реализован"""
         raise NotImplementedError("TXTSaver.get_vacancies еще не реализован")
 

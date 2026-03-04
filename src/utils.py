@@ -1,14 +1,13 @@
 """
 Модуль с утилитными функциями для работы с вакансиями.
 """
+
 from typing import List
 
 from .vacancy import Vacancy
 
 
-def filter_vacancies(
-        vacancies: List[Vacancy], filter_words: List[str]
-) -> List[Vacancy]:
+def filter_vacancies(vacancies: List[Vacancy], filter_words: List[str]) -> List[Vacancy]:
     """
     Фильтрация вакансий по ключевым словам
 
@@ -39,9 +38,7 @@ def filter_vacancies(
     return filtered
 
 
-def get_vacancies_by_salary(
-        vacancies: List[Vacancy], salary_range: str
-) -> List[Vacancy]:
+def get_vacancies_by_salary(vacancies: List[Vacancy], salary_range: str) -> List[Vacancy]:
     """
     Фильтрация вакансий по диапазону зарплат
 

@@ -1,4 +1,4 @@
-﻿from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch
 from src.api import HeadHunterAPI
 
 
@@ -15,7 +15,7 @@ class TestHeadHunterAPI:
         assert self.api._base_url == "https://api.hh.ru/vacancies"
         assert "User-Agent" in self.api._headers
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_get_vacancies_success(self, mock_get):
         """Тест успешного получения вакансий"""
         mock_response = Mock()
@@ -30,7 +30,7 @@ class TestHeadHunterAPI:
                     "snippet": {"requirement": "Опыт работы от 3 лет"},
                     "experience": {"name": "От 1 года до 3 лет"},
                     "employer": {"name": "Test Company"},
-                    "published_at": "2024-01-01T10:00:00+0300"
+                    "published_at": "2024-01-01T10:00:00+0300",
                 }
             ]
         }
@@ -40,11 +40,12 @@ class TestHeadHunterAPI:
 
         assert len(vacancies) == 1
         assert vacancies[0]["name"] == "Python Developer"
-        assert vacancies[0]["salary_from"] == 100000  # Изменили с "salary" на "salary_from"
+        # Изменили с "salary" на "salary_from"
+        assert vacancies[0]["salary_from"] == 100000
         assert vacancies[0]["salary_to"] == 150000
         assert vacancies[0]["salary_currency"] == "RUR"
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_get_vacancies_without_salary(self, mock_get):
         """Тест получения вакансий без зарплаты"""
         mock_response = Mock()
@@ -59,7 +60,7 @@ class TestHeadHunterAPI:
                     "snippet": {"requirement": "Опыт работы"},
                     "experience": {"name": "Нет опыта"},
                     "employer": {"name": "Test Company"},
-                    "published_at": "2024-01-01T10:00:00+0300"
+                    "published_at": "2024-01-01T10:00:00+0300",
                 }
             ]
         }
@@ -68,11 +69,12 @@ class TestHeadHunterAPI:
         vacancies = self.api.get_vacancies(self.search_query)
 
         assert len(vacancies) == 1
-        assert vacancies[0]["salary_from"] is None  # Изменили с "salary" на "salary_from"
+        # Изменили с "salary" на "salary_from"
+        assert vacancies[0]["salary_from"] is None
         assert vacancies[0]["salary_to"] is None
         assert vacancies[0]["salary_currency"] is None
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_get_vacancies_empty_response(self, mock_get):
         """Тест пустого ответа"""
         mock_response = Mock()
@@ -98,7 +100,7 @@ class TestHeadHunterAPI:
         assert self.api._clean_description("") == ""
         assert self.api._clean_description(None) == ""
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_get_vacancies_with_params(self, mock_get):
         """Тест получения вакансий с параметрами"""
         mock_response = Mock()
@@ -106,23 +108,18 @@ class TestHeadHunterAPI:
         mock_response.json.return_value = {"items": []}
         mock_get.return_value = mock_response
 
-        self.api.get_vacancies(
-            self.search_query,
-            per_page=50,
-            page=2,
-            only_with_salary=True
-        )
+        self.api.get_vacancies(self.search_query, per_page=50, page=2, only_with_salary=True)
 
         # Проверяем переданные параметры
         call_args = mock_get.call_args
-        params = call_args[1]['params']
+        params = call_args[1]["params"]
 
         assert params["text"] == self.search_query
         assert params["per_page"] == 50
         assert params["page"] == 2
         assert params["area"] == 113  # Россия
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_get_vacancies_request_exception(self, mock_get):
         """Тест исключения при запросе"""
         mock_get.side_effect = Exception("Connection error")
@@ -130,7 +127,7 @@ class TestHeadHunterAPI:
         vacancies = self.api.get_vacancies(self.search_query)
         assert vacancies == []
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_get_vacancies_json_exception(self, mock_get):
         """Тест исключения при парсинге JSON"""
         mock_response = Mock()
