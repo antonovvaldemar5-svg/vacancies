@@ -1,23 +1,26 @@
-[project]
+[tool.poetry]
 name = "pythonproject4"
-version = "0.1.0"
-description = ""
-authors = [
-    {name = "Vladimir",email = "antonovvaldemar5@gmail.com"}
-]
+version = "1.0.0"
+description = "Курсовая работа: интеграция с HH.ru и PostgreSQL"
+authors = ["Vladimir <antonovvaldemar5@gmail.com>"]
 readme = "README.md"
-requires-python = ">=3.14"
-dependencies = [
-]
+packages = [{include = "src"}]
 
+[tool.poetry.dependencies]
+python = "^3.10"
+requests = "^2.31.0"
+psycopg2-binary = "^2.9.9"
+python-dotenv = "^1.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-cov = "^4.1.0"
+flake8 = "^6.0.0"
+black = "^23.0.0"
+isort = "^5.12.0"
+mypy = "^1.0.0"
+autopep8 = "^2.0.0"
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[dependency-groups]
-lint = [
-    "black (>=26.1.0,<27.0.0)",
-    "isort (>=7.0.0,<8.0.0)",
-    "flake8 (>=7.3.0,<8.0.0)"
-]

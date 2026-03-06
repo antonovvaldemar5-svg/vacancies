@@ -1,138 +1,202 @@
-import pytest
-import json
 import os
-from unittest.mock import mock_open, patch
-from src.file_handlers import JSONSaver
+import json
+import tempfile
+import pytest
+from src.file_handlers import JSONSaver, CSVSaver, TXTSaver
 
 
 class TestJSONSaver:
     """Тесты для класса JSONSaver"""
 
-    def test_initialization(self):
-        """Тест инициализации JSONSaver"""
-        saver = JSONSaver("test_vacancies.json")
-        assert saver._filename == "test_vacancies.json"
+    def setup_method(self):
+        """Настройка перед каждым тестом"""
+        self.temp_dir = tempfile.mkdtemp()
+        self.test_file = os.path.join(self.temp_dir, "test_vacancies.json")
+        self.saver = JSONSaver(self.test_file)
 
-        # С файлом по умолчанию
-        saver_default = JSONSaver()
-        assert saver_default._filename == "vacancies.json"
+    def teardown_method(self):
+        """Очистка после каждого теста"""
+        if os.path.exists(self.test_file):
+            os.remove(self.test_file)
+        if os.path.exists(self.temp_dir):
+            os.rmdir(self.temp_dir)
 
-    @patch('os.path.exists')
-    @patch('builtins.open', new_callable=mock_open)
-    def test_ensure_file_exists_creates_file(self, mock_file, mock_exists):
-        """Тест создания файла если его нет"""
-        mock_exists.return_value = False
+    def test_init_default_filename(self):
+        """Тест инициализации с именем файла по умолчанию"""
+        saver = JSONSaver()
+        assert saver._filename == "vacancies.json"
 
-        saver = JSONSaver("test.json")
-        saver._ensure_file_exists()
+    def test_init_custom_filename(self):
+        """Тест инициализации с кастомным именем файла"""
+        assert self.saver._filename == self.test_file
 
-        mock_file.assert_called_once_with("test.json", 'w', encoding='utf-8')
-        mock_file().write.assert_called_once()
+    def test_ensure_file_exists_creates_file(self):
+        """Тест создания файла если не существует"""
+        if os.path.exists(self.test_file):
+            os.remove(self.test_file)
 
-    @patch('os.path.exists')
-    def test_ensure_file_exists_does_nothing(self, mock_exists):
-        """Тест когда файл уже существует"""
-        mock_exists.return_value = True
+        saver = JSONSaver(self.test_file)
+        assert os.path.exists(self.test_file)
 
-        saver = JSONSaver("test.json")
-        saver._ensure_file_exists()  # Не должно создавать файл
+        # Проверяем что файл содержит пустой список
+        with open(self.test_file, "r", encoding="utf-8") as f:
+            content = json.load(f)
+            assert content == []
 
-    @patch('builtins.open', new_callable=mock_open, read_data='[{"id": "1", "name": "Test"}]')
-    def test_read_file(self, mock_file):
-        """Тест чтения файла"""
-        saver = JSONSaver("test.json")
-        data = saver._read_file()
+    def test_add_vacancy(self):
+        """Тест добавления вакансии"""
+        vacancy_data = {
+            "id": "123",
+            "name": "Python Developer",
+            "url": "https://hh.ru/vacancy/123",
+            "salary_from": 100000,
+            "salary_to": 150000,
+        }
 
-        assert data == [{"id": "1", "name": "Test"}]
-        mock_file.assert_called_once_with("test.json", 'r', encoding='utf-8')
+        self.saver.add_vacancy(vacancy_data)
 
-    @patch('builtins.open', new_callable=mock_open)
-    def test_write_file(self, mock_file):
-        """Тест записи в файл"""
-        saver = JSONSaver("test.json")
-        test_data = [{"id": "1", "name": "Test"}]
+        # Читаем файл и проверяем
+        with open(self.test_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            assert len(data) == 1
+            assert data[0]["id"] == "123"
+            assert data[0]["name"] == "Python Developer"
 
-        saver._write_file(test_data)
+    def test_add_vacancy_no_duplicates(self):
+        """Тест что дубликаты не добавляются"""
+        vacancy_data = {"id": "123", "name": "Python Developer"}
 
-        mock_file.assert_called_once_with("test.json", 'w', encoding='utf-8')
-        # Проверяем что json.dump был вызван с правильными аргументами
-        mock_file().write.assert_called_once()
+        # Добавляем два раза
+        self.saver.add_vacancy(vacancy_data)
+        self.saver.add_vacancy(vacancy_data)
 
-    def test_add_vacancy_no_duplicate(self):
-        """Тест добавления вакансии без дубликата"""
-        saver = JSONSaver("test.json")
+        with open(self.test_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            assert len(data) == 1  # Только одна запись
 
-        # Мокаем чтение и запись
-        with patch.object(saver, '_read_file', return_value=[]):
-            with patch.object(saver, '_write_file') as mock_write:
-                vacancy_data = {"id": "123", "name": "Python Developer"}
-                saver.add_vacancy(vacancy_data)
+    def test_get_vacancies_empty(self):
+        """Тест получения вакансий из пустого файла"""
+        vacancies = self.saver.get_vacancies()
+        assert vacancies == []
 
-                mock_write.assert_called_once_with([vacancy_data])
-
-    def test_add_vacancy_with_duplicate(self):
-        """Тест добавления вакансии с дубликатом"""
-        saver = JSONSaver("test.json")
-
-        existing_vacancies = [{"id": "123", "name": "Existing"}]
-
-        with patch.object(saver, '_read_file', return_value=existing_vacancies):
-            with patch.object(saver, '_write_file') as mock_write:
-                vacancy_data = {"id": "123", "name": "Duplicate"}  # Тот же ID
-                saver.add_vacancy(vacancy_data)
-
-                # Не должно вызывать запись так как дубликат
-                mock_write.assert_not_called()
-
-    def test_get_vacancies_no_criteria(self):
-        """Тест получения всех вакансий"""
-        saver = JSONSaver("test.json")
-        test_data = [
-            {"id": "1", "name": "Python"},
-            {"id": "2", "name": "Java"}
+    def test_get_vacancies_with_data(self):
+        """Тест получения вакансий с данными"""
+        # Добавляем тестовые данные
+        vacancies_data = [
+            {"id": "1", "name": "Python", "salary": 100000},
+            {"id": "2", "name": "Java", "salary": 120000},
+            {"id": "3", "name": "Python Senior", "salary": 200000},
         ]
 
-        with patch.object(saver, '_read_file', return_value=test_data):
-            result = saver.get_vacancies()
+        for data in vacancies_data:
+            self.saver.add_vacancy(data)
 
-            assert result == test_data
-            assert len(result) == 2
+        all_vacancies = self.saver.get_vacancies()
+        assert len(all_vacancies) == 3
 
     def test_get_vacancies_with_criteria(self):
-        """Тест получения вакансий по критериям"""
-        saver = JSONSaver("test.json")
-        test_data = [
-            {"id": "1", "name": "Python Developer", "experience": "Junior"},
-            {"id": "2", "name": "Java Developer", "experience": "Senior"},
-            {"id": "3", "name": "Python Senior", "experience": "Senior"}
+        """Тест получения вакансий с критериями"""
+        # Добавляем тестовые данные
+        vacancies_data = [
+            {"id": "1", "name": "Python Developer", "experience": "junior"},
+            {"id": "2", "name": "Java Developer", "experience": "senior"},
+            {"id": "3", "name": "Python Senior", "experience": "senior"},
         ]
 
-        with patch.object(saver, '_read_file', return_value=test_data):
-            # Поиск по имени
-            result = saver.get_vacancies({"name": "Python"})
-            assert len(result) == 2
+        for data in vacancies_data:
+            self.saver.add_vacancy(data)
 
-            # Поиск по опыту
-            result = saver.get_vacancies({"experience": "Senior"})
-            assert len(result) == 2
-            assert result[0]["name"] == "Java Developer"
+        # Фильтр по имени
+        python_vacancies = self.saver.get_vacancies({"name": "Python"})
+        assert len(python_vacancies) == 2
+
+        # Фильтр по опыту
+        senior_vacancies = self.saver.get_vacancies({"experience": "senior"})
+        assert len(senior_vacancies) == 2
+
+        # Фильтр по нескольким критериям
+        python_senior = self.saver.get_vacancies({"name": "Python", "experience": "senior"})
+        assert len(python_senior) == 1
+        assert python_senior[0]["id"] == "3"
+
+    def test_get_vacancies_case_insensitive(self):
+        """Тест регистронезависимого поиска"""
+        self.saver.add_vacancy({"id": "1", "name": "Python Developer"})
+
+        # Разные регистры должны находить
+        result1 = self.saver.get_vacancies({"name": "python"})
+        result2 = self.saver.get_vacancies({"name": "PYTHON"})
+        result3 = self.saver.get_vacancies({"name": "Python"})
+
+        assert len(result1) == 1
+        assert len(result2) == 1
+        assert len(result3) == 1
 
     def test_delete_vacancy(self):
         """Тест удаления вакансии"""
-        saver = JSONSaver("test.json")
-        test_data = [
-            {"id": "1", "name": "Python"},
-            {"id": "2", "name": "Java"},
-            {"id": "3", "name": "C++"}
-        ]
+        # Добавляем несколько вакансий
+        vacancies_data = [{"id": "1", "name": "Python"}, {"id": "2", "name": "Java"}, {"id": "3", "name": "JavaScript"}]
 
-        with patch.object(saver, '_read_file', return_value=test_data):
-            with patch.object(saver, '_write_file') as mock_write:
-                saver.delete_vacancy("2")
+        for data in vacancies_data:
+            self.saver.add_vacancy(data)
 
-                # Должны остаться вакансии с id 1 и 3
-                expected_data = [
-                    {"id": "1", "name": "Python"},
-                    {"id": "3", "name": "C++"}
-                ]
-                mock_write.assert_called_once_with(expected_data)
+        # Удаляем одну
+        self.saver.delete_vacancy("2")
+
+        # Проверяем
+        remaining = self.saver.get_vacancies()
+        assert len(remaining) == 2
+        ids = [v["id"] for v in remaining]
+        assert "1" in ids
+        assert "3" in ids
+        assert "2" not in ids
+
+    def test_delete_nonexistent_vacancy(self):
+        """Тест удаления несуществующей вакансии"""
+        self.saver.add_vacancy({"id": "1", "name": "Python"})
+
+        # Удаляем несуществующую - не должно быть ошибки
+        self.saver.delete_vacancy("999")
+
+        remaining = self.saver.get_vacancies()
+        assert len(remaining) == 1
+
+    def test_read_file_corrupted_json(self):
+        """Тест чтения поврежденного JSON файла"""
+        # Записываем некорректный JSON
+        with open(self.test_file, "w", encoding="utf-8") as f:
+            f.write("{invalid json")
+
+        # Должен вернуть пустой список
+        vacancies = self.saver.get_vacancies()
+        assert vacancies == []
+
+
+class TestOtherSavers:
+    """Тесты для других саверов (заглушки)"""
+
+    def test_csv_saver_stubs(self):
+        """Тест что CSV савер имеет заглушки"""
+        saver = CSVSaver()
+
+        with pytest.raises(NotImplementedError):
+            saver.add_vacancy({})
+
+        with pytest.raises(NotImplementedError):
+            saver.get_vacancies()
+
+        with pytest.raises(NotImplementedError):
+            saver.delete_vacancy("1")
+
+    def test_txt_saver_stubs(self):
+        """Тест что TXT савер имеет заглушки"""
+        saver = TXTSaver()
+
+        with pytest.raises(NotImplementedError):
+            saver.add_vacancy({})
+
+        with pytest.raises(NotImplementedError):
+            saver.get_vacancies()
+
+        with pytest.raises(NotImplementedError):
+            saver.delete_vacancy("1")
