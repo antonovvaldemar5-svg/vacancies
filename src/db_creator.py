@@ -11,18 +11,14 @@ class DBCreator:
     """Класс для создания базы данных и таблиц."""
 
     @staticmethod
-    def create_database():
+    def create_database() -> bool:
         """
         Создание базы данных если она не существует.
 
-        Подключается к стандартной базе postgres, проверяет наличие целевой БД
-        и создает её при необходимости.
-
         Returns:
-            bool: True если БД создана или уже существует, False в случае ошибки
+            bool: True если успешно, False если ошибка
         """
         try:
-            # Подключение к стандартной базе postgres
             conn = psycopg2.connect(
                 host=DBConfig.HOST,
                 port=DBConfig.PORT,
@@ -33,7 +29,6 @@ class DBCreator:
             conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
             cur = conn.cursor()
 
-            # Проверка существования базы данных
             cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (DBConfig.NAME,))
             exists = cur.fetchone()
 
@@ -41,31 +36,24 @@ class DBCreator:
                 cur.execute(sql.SQL("CREATE DATABASE {}").format(
                     sql.Identifier(DBConfig.NAME)
                 ))
-                print(f"База данных {DBConfig.NAME} успешно создана")
+                print(f"База данных {DBConfig.NAME} создана")
             else:
                 print(f"База данных {DBConfig.NAME} уже существует")
 
             cur.close()
             conn.close()
             return True
-
         except Exception as e:
-            print(f"Ошибка при создании базы данных: {e}")
+            print(f"Ошибка создания БД: {e}")
             return False
 
     @staticmethod
-    def create_tables():
+    def create_tables() -> bool:
         """
         Создание таблиц employers и vacancies.
 
-        Создает две связанные таблицы:
-        - employers: информация о компаниях-работодателях
-        - vacancies: информация о вакансиях с внешним ключом на employers
-
-        Также создает индексы для ускорения поиска.
-
         Returns:
-            bool: True если таблицы созданы успешно, False в случае ошибки
+            bool: True если успешно, False если ошибка
         """
         try:
             conn = psycopg2.connect(
@@ -77,7 +65,6 @@ class DBCreator:
             )
             cur = conn.cursor()
 
-            # Таблица компаний
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS employers (
                     id SERIAL PRIMARY KEY,
@@ -90,7 +77,6 @@ class DBCreator:
                 )
             """)
 
-            # Таблица вакансий
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS vacancies (
                     id SERIAL PRIMARY KEY,
@@ -110,17 +96,15 @@ class DBCreator:
                 )
             """)
 
-            # Индексы для ускорения поиска
             cur.execute("CREATE INDEX IF NOT EXISTS idx_vacancies_employer ON vacancies(employer_id)")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_vacancies_salary ON vacancies(salary_from, salary_to)")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_vacancies_name ON vacancies(name)")
 
             conn.commit()
-            print("Таблицы успешно созданы")
+            print("Таблицы созданы успешно")
             cur.close()
             conn.close()
             return True
-
         except Exception as e:
-            print(f"Ошибка при создании таблиц: {e}")
+            print(f"Ошибка создания таблиц: {e}")
             return False

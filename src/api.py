@@ -22,29 +22,17 @@ class HeadHunterAPI(APIHandler):
         Получение вакансий по поисковому запросу.
 
         Args:
-            search_query: Поисковый запрос (например: "Python разработчик")
-            per_page: Количество вакансий на странице (по умолчанию 100)
-            **kwargs: Дополнительные параметры запроса:
-                - page: Номер страницы
-                - only_with_salary: Только с зарплатой
+            search_query: Поисковый запрос
+            per_page: Количество вакансий на странице
+            **kwargs: Дополнительные параметры
 
         Returns:
-            Список вакансий в формате словарей с ключами:
-                - id: ID вакансии
-                - name: Название вакансии
-                - url: Ссылка на вакансию
-                - salary_from: Зарплата от
-                - salary_to: Зарплата до
-                - salary_currency: Валюта
-                - description: Описание вакансии
-                - experience: Требуемый опыт
-                - employer: Название компании
-                - published_at: Дата публикации
+            Список вакансий
         """
         params = {
             "text": search_query,
             "per_page": per_page,
-            "area": 113,  # Россия
+            "area": 113,
             "page": kwargs.get("page", 0),
             "only_with_salary": kwargs.get("only_with_salary", False)
         }
@@ -56,7 +44,6 @@ class HeadHunterAPI(APIHandler):
 
             vacancies = []
             for item in data.get("items", []):
-                # Получаем зарплату
                 salary_data = item.get("salary")
                 salary_from = None
                 salary_to = None
@@ -95,23 +82,17 @@ class HeadHunterAPI(APIHandler):
         Поиск компаний по названию.
 
         Args:
-            company_name: Название компании для поиска
-            per_page: Количество результатов на странице
+            company_name: Название компании
+            per_page: Количество результатов
 
         Returns:
-            Список компаний в формате словарей с ключами:
-                - id: ID компании
-                - name: Название компании
-                - description: Описание компании
-                - site_url: Сайт компании
-                - logo_url: URL логотипа
-                - hh_url: Ссылка на страницу компании на hh.ru
+            Список компаний
         """
         url = "https://api.hh.ru/employers"
         params = {
             "text": company_name,
             "per_page": per_page,
-            "area": 113  # Россия
+            "area": 113
         }
 
         try:
@@ -130,22 +111,21 @@ class HeadHunterAPI(APIHandler):
                     "hh_url": item.get("alternate_url")
                 }
                 companies.append(company)
-
             return companies
         except Exception as e:
-            print(f"Ошибка при поиске компаний: {e}")
+            print(f"Ошибка поиска компаний: {e}")
             return []
 
     def get_company_vacancies(self, employer_id: str, per_page: int = 100) -> List[Dict[str, Any]]:
         """
-        Получение вакансий конкретной компании.
+        Получение вакансий компании.
 
         Args:
-            employer_id: ID компании на hh.ru
-            per_page: Количество вакансий на странице
+            employer_id: ID компании
+            per_page: Количество вакансий
 
         Returns:
-            Список вакансий компании в формате словарей
+            Список вакансий компании
         """
         params = {
             "employer_id": employer_id,
@@ -174,23 +154,14 @@ class HeadHunterAPI(APIHandler):
                     "published_at": item.get("published_at")
                 }
                 vacancies.append(vacancy)
-
             return vacancies
         except Exception as e:
-            print(f"Ошибка при получении вакансий компании: {e}")
+            print(f"Ошибка получения вакансий компании: {e}")
             return []
 
     @staticmethod
     def _clean_description(description: str) -> str:
-        """
-        Очистка описания от HTML-тегов.
-
-        Args:
-            description: Описание с HTML-тегами
-
-        Returns:
-            Описание без HTML-тегов
-        """
+        """Очистка описания от HTML-тегов."""
         if not description:
             return ""
         return re.sub(r'<[^>]+>', '', description)

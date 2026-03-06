@@ -37,7 +37,7 @@ htmlcov/
 venv/
 .env/
 .venv/
-env/
+.env
 
 # Project specific
 *.json
